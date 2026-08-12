@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { logoutUser } from "@/lib/auth/authService";
-
+import { CheckIcon } from "@/components/ui/icons";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, initializing } = useAuth();
@@ -39,7 +39,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-10">
           <Link href="/lists" className="group flex items-center gap-2.5 font-display text-xl font-bold text-ink transition-colors hover:text-accent-text">
-            <span className="h-6 w-6 rounded-md bg-accent shrink-0 transition-transform group-hover:scale-105" aria-hidden="true" />
+            <span className="flex h-7 w-7 shrink-0 -rotate-6 items-center justify-center rounded-lg bg-accent text-surface shadow-sm transition-transform group-hover:rotate-0 group-hover:scale-105" aria-hidden="true">
+              <CheckIcon className="h-4 w-4 stroke-[3]" />
+            </span>
             Together
           </Link>
           <div className="flex items-center gap-4">
