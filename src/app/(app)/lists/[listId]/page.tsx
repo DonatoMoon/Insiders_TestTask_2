@@ -6,15 +6,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { useListDetail } from "@/hooks/useListDetail";
 import { useTasks } from "@/hooks/useTasks";
 import { TaskModal } from "@/components/tasks/TaskModal";
+import { TaskItem } from "@/components/tasks/TaskItem";
 import { Button } from "@/components/ui/Button";
 import { ChevronLeftIcon, PlusIcon } from "@/components/ui/icons";
+import type { Task } from "@/lib/types";
 
 export default function ListDetailPage({ params }: { params: Promise<{ listId: string }> }) {
   const { listId } = use(params);
   const { user } = useAuth();
   const { list, role, loading: listLoading } = useListDetail(listId);
   const { tasks, loading: tasksLoading } = useTasks(listId);
-  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [taskModalTarget, setTaskModalTarget] = useState<Task | "new" | null>(null);
 
   const canEdit = role === "owner" || role === "admin";
 
@@ -37,6 +39,8 @@ export default function ListDetailPage({ params }: { params: Promise<{ listId: s
     );
   }
 
+  const editingTask = taskModalTarget && taskModalTarget !== "new" ? taskModalTarget : undefined;
+
   return (
     <main className="mx-auto max-w-[1360px] px-10 py-11">
       <Link href="/lists" className="mb-6 inline-flex items-center gap-[0.4rem] text-sm font-bold text-ink-soft hover:text-accent-text">
@@ -52,7 +56,7 @@ export default function ListDetailPage({ params }: { params: Promise<{ listId: s
           </p>
         </div>
         {canEdit && (
-          <Button onClick={() => setTaskModalOpen(true)}>
+          <Button onClick={() => setTaskModalTarget("new")}>
             <PlusIcon className="h-4 w-4" />
             Add task
           </Button>
@@ -66,16 +70,25 @@ export default function ListDetailPage({ params }: { params: Promise<{ listId: s
       ) : (
         <ul className="flex flex-col gap-3">
           {tasks.map((task) => (
-            <li key={task.id} className="rounded-lg border border-line bg-surface px-5 py-4">
-              <span className="font-bold text-ink">{task.title}</span>
-              {task.description && <p className="mt-1 text-sm text-ink-soft">{task.description}</p>}
-              <p className="mt-1 text-xs text-ink-faint">{task.completed ? "Completed" : "Not completed"}</p>
-            </li>
+            <TaskItem
+              key={task.id}
+              task={task}
+              listId={listId}
+              canEdit={canEdit}
+              onEdit={() => setTaskModalTarget(task)}
+            />
           ))}
         </ul>
       )}
 
-      {canEdit && <TaskModal open={taskModalOpen} onClose={() => setTaskModalOpen(false)} listId={listId} />}
+      {canEdit && (
+        <TaskModal
+          open={taskModalTarget !== null}
+          onClose={() => setTaskModalTarget(null)}
+          listId={listId}
+          initial={editingTask ? { id: editingTask.id, title: editingTask.title, description: editingTask.description } : undefined}
+        />
+      )}
     </main>
   );
 }
