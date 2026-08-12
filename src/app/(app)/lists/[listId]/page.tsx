@@ -7,6 +7,7 @@ import { useListDetail } from "@/hooks/useListDetail";
 import { useTasks } from "@/hooks/useTasks";
 import { TaskModal } from "@/components/tasks/TaskModal";
 import { TaskItem } from "@/components/tasks/TaskItem";
+import { MembersPanel } from "@/components/lists/MembersPanel";
 import { Button } from "@/components/ui/Button";
 import { ChevronLeftIcon, PlusIcon } from "@/components/ui/icons";
 import type { Task } from "@/lib/types";
@@ -63,23 +64,29 @@ export default function ListDetailPage({ params }: { params: Promise<{ listId: s
         )}
       </div>
 
-      {tasksLoading ? (
-        <p className="text-ink-soft">Loading tasks…</p>
-      ) : tasks.length === 0 ? (
-        <p className="text-ink-soft">No tasks yet.</p>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {tasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              listId={listId}
-              canEdit={canEdit}
-              onEdit={() => setTaskModalTarget(task)}
-            />
-          ))}
-        </ul>
-      )}
+      <div className="grid items-start gap-10 lg:grid-cols-[1fr_320px]">
+        <div>
+          {tasksLoading ? (
+            <p className="text-ink-soft">Loading tasks…</p>
+          ) : tasks.length === 0 ? (
+            <p className="text-ink-soft">No tasks yet.</p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {tasks.map((task) => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  listId={listId}
+                  canEdit={canEdit}
+                  onEdit={() => setTaskModalTarget(task)}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <MembersPanel listId={listId} members={list.members} isOwner={role === "owner"} currentUid={user.uid} />
+      </div>
 
       {canEdit && (
         <TaskModal

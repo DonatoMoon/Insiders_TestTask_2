@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, limit, query, setDoc, where } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, limit, query, setDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import type { UserProfile } from "@/lib/types";
 
@@ -12,4 +12,9 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
   return snapshot.docs[0].data() as UserProfile;
+}
+
+export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+  const snapshot = await getDoc(doc(db, "users", uid));
+  return snapshot.exists() ? (snapshot.data() as UserProfile) : null;
 }
