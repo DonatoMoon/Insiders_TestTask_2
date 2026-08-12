@@ -109,10 +109,14 @@ export default function ListsPage() {
         title="Delete list?"
         body={`"${deleteTarget?.title}" and all its tasks will be permanently deleted. This can't be undone.`}
         confirmLabel="Delete"
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!deleteTarget) return;
-          deleteList(deleteTarget.id);
-          toast.success("List deleted");
+          try {
+            await deleteList(deleteTarget.id);
+            toast.success("List deleted");
+          } catch {
+            toast.error("Something went wrong, try again");
+          }
         }}
       />
     </main>
