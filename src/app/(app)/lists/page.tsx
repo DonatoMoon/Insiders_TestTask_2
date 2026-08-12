@@ -93,7 +93,6 @@ export default function ListsPage() {
 
   // Stat pills use the full unfiltered `lists` so they don't shift while
   // the user is mid-search — only the rendered groups below use `filtered`.
-  const sharedCount = user ? lists.filter((l) => l.members[user.uid] !== "owner").length : 0;
   const ownLists = filtered.filter((l) => user && l.members[user.uid] === "owner");
   const sharedLists = filtered.filter((l) => user && l.members[user.uid] !== "owner");
 
@@ -116,12 +115,6 @@ export default function ListsPage() {
               {lists.length}
             </span>
             Lists
-          </div>
-          <div className="flex items-center gap-[0.4rem] text-sm font-medium text-ink-soft">
-            <span className="flex h-[26px] min-w-[26px] items-center justify-center rounded-full bg-surface-sunk px-2 text-xs font-bold text-ink">
-              {sharedCount}
-            </span>
-            Shared
           </div>
         </div>
       </div>
