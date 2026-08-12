@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { loginSchema, LoginFormValues } from "@/lib/validation/schemas";
 import { loginUser } from "@/lib/auth/authService";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 
@@ -51,9 +52,9 @@ export function LoginForm() {
       </Button>
       <p className="text-center text-sm text-ink-soft">
         New here?{" "}
-        <a href="/register" className="font-bold text-accent-text">
+        <Link href="/register" className="font-bold text-accent-text">
           Create an account
-        </a>
+        </Link>
       </p>
     </form>
   );

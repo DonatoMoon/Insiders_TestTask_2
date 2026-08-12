@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { registerSchema, RegisterFormValues } from "@/lib/validation/schemas";
 import { registerUser } from "@/lib/auth/authService";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 
@@ -78,9 +79,9 @@ export function RegisterForm() {
       </Button>
       <p className="text-center text-sm text-ink-soft">
         Already have an account?{" "}
-        <a href="/login" className="font-bold text-accent-text">
+        <Link href="/login" className="font-bold text-accent-text">
           Sign in
-        </a>
+        </Link>
       </p>
     </form>
   );
