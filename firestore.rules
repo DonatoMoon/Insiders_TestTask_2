@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isSignedIn() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    match /lists/{listId} {
+      function isMember() {
+        return isSignedIn() && request.auth.uid in resource.data.members;
+      }
+      function isOwner() {
+        return isSignedIn() && resource.data.members[request.auth.uid] == 'owner';
+      }
+
+      allow read: if isMember();
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.members[request.auth.uid] == 'owner';
+      allow update: if isOwner();
+      allow delete: if isOwner();
+
+      match /tasks/{taskId} {
+        function parentList() {
+          return get(/databases/$(database)/documents/lists/$(listId)).data;
+        }
+        function parentRole() {
+          return parentList().members[request.auth.uid];
+        }
+        function isParentMember() {
+          return isSignedIn() && request.auth.uid in parentList().members;
+        }
+        function isParentEditor() {
+          return isSignedIn() && (parentRole() == 'owner' || parentRole() == 'admin');
+        }
+
+        allow read: if isParentMember();
+        allow create: if isParentEditor();
+        allow delete: if isParentEditor();
+        allow update: if isParentEditor() || (
+          isParentMember() && parentRole() == 'viewer' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completed', 'updatedAt'])
+        );
+      }
+    }
+  }
+}
