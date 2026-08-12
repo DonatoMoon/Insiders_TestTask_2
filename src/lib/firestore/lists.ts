@@ -6,6 +6,7 @@ import {
   DocumentData,
   getDocs,
   onSnapshot,
+  orderBy,
   query,
   setDoc,
   updateDoc,
@@ -26,6 +27,7 @@ function toTodoList(id: string, data: DocumentData): TodoList {
     members: data.members,
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
+    order: data.order ?? data.createdAt,
   };
 }
 
@@ -34,11 +36,16 @@ export function subscribeToMyLists(
   callback: (lists: TodoList[]) => void,
   onError: (error: FirestoreError) => void
 ): Unsubscribe {
-  const q = query(collection(db, "lists"), where(`members.${uid}`, "!=", null));
+  const q = query(
+    collection(db, "lists"),
+    where(`members.${uid}`, "!=", null)
+  );
   return onSnapshot(
     q,
     (snapshot) => {
-      callback(snapshot.docs.map((d) => toTodoList(d.id, d.data())));
+      const items = snapshot.docs.map((d) => toTodoList(d.id, d.data()));
+      items.sort((a, b) => (a.order ?? a.createdAt) - (b.order ?? b.createdAt));
+      callback(items);
     },
     onError
   );
@@ -67,6 +74,7 @@ export async function createList(title: string, ownerId: string): Promise<string
     members: { [ownerId]: "owner" as Role },
     createdAt: now,
     updatedAt: now,
+    order: Date.now(),
   });
   return ref.id;
 }
@@ -111,4 +119,12 @@ export async function removeMember(listId: string, uid: string): Promise<void> {
     [`members.${uid}`]: deleteField(),
     updatedAt: Date.now(),
   });
+}
+
+export async function updateListsOrder(listOrders: { id: string; order: number }[]): Promise<void> {
+  const batch = writeBatch(db);
+  listOrders.forEach(({ id, order }) => {
+    batch.update(doc(db, "lists", id), { order, updatedAt: Date.now() });
+  });
+  await batch.commit();
 }

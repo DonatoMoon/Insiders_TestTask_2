@@ -3,8 +3,10 @@
 import { useState } from "react";
 import clsx from "clsx";
 import { toast } from "sonner";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { toggleTaskCompleted, deleteTask } from "@/lib/firestore/tasks";
-import { CheckIcon, PencilIcon, TrashIcon } from "@/components/ui/icons";
+import { CheckIcon, PencilIcon, TrashIcon, GripVerticalIcon } from "@/components/ui/icons";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { Task } from "@/lib/types";
 
@@ -17,9 +19,25 @@ interface TaskItemProps {
 
 export function TaskItem({ task, listId, canEdit, onEdit }: TaskItemProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
 
   return (
-    <li className="relative flex items-start gap-4 rounded-lg border border-l-[3px] border-dashed border-line border-l-line-strong bg-surface px-[1.15rem] py-[1.05rem] pl-[1.7rem]">
+    <li
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 30 : 1 }}
+      className="relative flex items-start gap-4 rounded-lg border border-l-[3px] border-dashed border-line border-l-line-strong bg-surface px-[1.15rem] py-[1.05rem] pl-[1.7rem]"
+    >
+      {canEdit && (
+        <button
+          type="button"
+          aria-label="Drag to reorder task"
+          className="mt-1 flex-none cursor-grab touch-none text-ink-soft hover:text-ink active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVerticalIcon className="h-5 w-5" />
+        </button>
+      )}
       <button
         type="button"
         role="checkbox"

@@ -1,9 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  rectSortingStrategy,
+  arrayMove,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
 import { useAuth } from "@/hooks/useAuth";
 import { useLists } from "@/hooks/useLists";
-import { deleteList } from "@/lib/firestore/lists";
+import { deleteList, updateListsOrder } from "@/lib/firestore/lists";
 import { CreateListModal } from "@/components/lists/CreateListModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ListCard } from "@/components/lists/ListCard";
@@ -12,22 +27,60 @@ import { SearchIcon } from "@/components/ui/icons";
 import { toast } from "sonner";
 import type { TodoList } from "@/lib/types";
 
-type SortOption = "updated" | "name";
+type SortOption = "custom" | "updated" | "name";
 
 export default function ListsPage() {
   const { user } = useAuth();
   const { lists, loading, error } = useLists();
+  const [localLists, setLocalLists] = useState<TodoList[]>([]);
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortOption>("updated");
+  const [sort, setSort] = useState<SortOption>("custom");
   const [createOpen, setCreateOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<TodoList | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TodoList | null>(null);
 
+  useEffect(() => {
+    setLocalLists(lists);
+  }, [lists]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = localLists.findIndex((l) => l.id === active.id);
+      const newIndex = localLists.findIndex((l) => l.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reordered = arrayMove(localLists, oldIndex, newIndex);
+        setLocalLists(reordered);
+        const updates = reordered.map((list, index) => ({ id: list.id, order: index }));
+        updateListsOrder(updates).catch(() => {
+          toast.error("Failed to save new order");
+        });
+      }
+    }
+  };
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    const result = term ? lists.filter((l) => l.title.toLowerCase().includes(term)) : lists;
-    return [...result].sort((a, b) => (sort === "name" ? a.title.localeCompare(b.title) : b.updatedAt - a.updatedAt));
-  }, [lists, search, sort]);
+    const result = term ? localLists.filter((l) => l.title.toLowerCase().includes(term)) : localLists;
+    if (sort === "name") {
+      return [...result].sort((a, b) => a.title.localeCompare(b.title));
+    }
+    if (sort === "updated") {
+      return [...result].sort((a, b) => b.updatedAt - a.updatedAt);
+    }
+    return result;
+  }, [localLists, search, sort]);
 
   // `renameTarget` is state, so its identity is stable across re-renders;
   // memoising on it keeps the `initial` object stable too. Without this the
@@ -90,6 +143,7 @@ export default function ListsPage() {
               value={sort}
               onChange={(val) => setSort(val as SortOption)}
               options={[
+                { value: "custom", label: "Sort: Custom (Drag & Drop)" },
                 { value: "updated", label: "Sort: Recently updated" },
                 { value: "name", label: "Sort: Name (A–Z)" },
               ]}
@@ -110,12 +164,14 @@ export default function ListsPage() {
       ) : loading ? (
         <p className="text-ink-soft">Loading lists…</p>
       ) : (
-        <>
-          <ListGroup title="Your lists" lists={ownLists} userUid={user.uid} onRename={setRenameTarget} onDelete={setDeleteTarget} />
-          <div className="mt-8 sm:mt-11">
-            <ListGroup title="Shared with you" lists={sharedLists} userUid={user.uid} onRename={setRenameTarget} onDelete={setDeleteTarget} />
-          </div>
-        </>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={localLists.map((l) => l.id)} strategy={rectSortingStrategy}>
+            <ListGroup title="Your lists" lists={ownLists} userUid={user.uid} onRename={setRenameTarget} onDelete={setDeleteTarget} />
+            <div className="mt-8 sm:mt-11">
+              <ListGroup title="Shared with you" lists={sharedLists} userUid={user.uid} onRename={setRenameTarget} onDelete={setDeleteTarget} />
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       <CreateListModal open={createOpen} onClose={() => setCreateOpen(false)} ownerId={user.uid} />

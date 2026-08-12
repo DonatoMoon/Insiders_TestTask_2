@@ -24,14 +24,15 @@ service cloud.firestore {
       // The client-side zod schemas are trivially bypassed via the SDK, so the
       // same constraints are restated here.
       function isValidList(data) {
-        return data.keys().hasOnly(['title', 'ownerId', 'members', 'createdAt', 'updatedAt'])
+        return data.keys().hasOnly(['title', 'ownerId', 'members', 'createdAt', 'updatedAt', 'order'])
           && data.keys().hasAll(['title', 'ownerId', 'members', 'createdAt', 'updatedAt'])
           && data.title is string && data.title.size() >= 1 && data.title.size() <= 80
           && data.ownerId is string
           && data.members is map
           && data.members.values().hasOnly(['owner', 'admin', 'viewer'])
           && data.createdAt is number
-          && data.updatedAt is number;
+          && data.updatedAt is number
+          && (!('order' in data) || data.order is number);
       }
 
       allow read: if isMember();
@@ -65,13 +66,14 @@ service cloud.firestore {
         }
         // Mirrors taskSchema in src/lib/validation/schemas.ts.
         function isValidTask(data) {
-          return data.keys().hasOnly(['title', 'description', 'completed', 'createdAt', 'updatedAt'])
+          return data.keys().hasOnly(['title', 'description', 'completed', 'createdAt', 'updatedAt', 'order'])
             && data.keys().hasAll(['title', 'description', 'completed', 'createdAt', 'updatedAt'])
             && data.title is string && data.title.size() >= 1 && data.title.size() <= 120
             && data.description is string && data.description.size() <= 500
             && data.completed is bool
             && data.createdAt is number
-            && data.updatedAt is number;
+            && data.updatedAt is number
+            && (!('order' in data) || data.order is number);
         }
 
         allow read: if isParentMember();

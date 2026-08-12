@@ -2,8 +2,11 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import clsx from "clsx";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { formatRelativeTime } from "@/lib/format";
-import { KeyIcon, WrenchIcon, EyeIcon, KebabIcon } from "@/components/ui/icons";
+import { KeyIcon, WrenchIcon, EyeIcon, KebabIcon, GripVerticalIcon } from "@/components/ui/icons";
 import { useTasks } from "@/hooks/useTasks";
 import { useMemberProfiles } from "@/hooks/useMemberProfiles";
 import type { Role, TodoList } from "@/lib/types";
@@ -114,6 +117,7 @@ interface ListCardProps {
 }
 
 export function ListCard({ list, role, onRename, onDelete }: ListCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: list.id });
   const [menuOpen, setMenuOpen] = useState(false);
   const meta = roleMeta[role];
   const RoleIcon = meta.icon;
@@ -125,8 +129,18 @@ export function ListCard({ list, role, onRename, onDelete }: ListCardProps) {
 
   return (
     <article
-      style={{ "--tilt": tilt } as CSSProperties}
-      className="relative flex flex-col rotate-[var(--tilt)] rounded-card border border-line bg-surface p-[1.4rem] shadow-rest transition duration-300 hover:-translate-y-1 hover:rotate-0 hover:shadow-lift"
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 30 : 1,
+        ...({ "--tilt": tilt } as CSSProperties),
+      }}
+      className={clsx(
+        "relative flex flex-col rotate-[var(--tilt)] rounded-card border border-line bg-surface p-[1.4rem] shadow-rest hover:-translate-y-1 hover:rotate-0 hover:shadow-lift",
+        !isDragging && "transition duration-200"
+      )}
     >
       <div className="mb-[0.85rem] flex items-start justify-between gap-2">
         <span
@@ -135,47 +149,58 @@ export function ListCard({ list, role, onRename, onDelete }: ListCardProps) {
           <RoleIcon className="h-3 w-3" />
           {meta.label}
         </span>
-        {role === "owner" && (
-          <div className="relative">
-            <button
-              type="button"
-              aria-label="List options"
-              onClick={(e) => {
-                e.preventDefault();
-                setMenuOpen((v) => !v);
-              }}
-              className="relative z-10 flex h-[30px] w-[30px] items-center justify-center rounded-full text-ink-faint hover:bg-surface-sunk hover:text-ink"
-            >
-              <KebabIcon className="h-4 w-4" />
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-[calc(100%+6px)] z-10 flex min-w-[150px] flex-col gap-1 rounded-lg border border-line bg-surface p-[0.35rem] shadow-lift">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMenuOpen(false);
-                    onRename();
-                  }}
-                  className="rounded-md px-[0.65rem] py-2 text-left text-sm font-semibold hover:bg-surface-sunk"
-                >
-                  Rename
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMenuOpen(false);
-                    onDelete();
-                  }}
-                  className="rounded-md px-[0.65rem] py-2 text-left text-sm font-semibold text-danger hover:bg-surface-sunk"
-                >
-                  Delete
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Drag to reorder list"
+            className="relative z-10 flex-none cursor-grab touch-none text-ink-soft hover:text-ink active:cursor-grabbing"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVerticalIcon className="h-4 w-4" />
+          </button>
+          {role === "owner" && (
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="List options"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMenuOpen((v) => !v);
+                }}
+                className="relative z-10 flex h-[30px] w-[30px] items-center justify-center rounded-full text-ink-faint hover:bg-surface-sunk hover:text-ink"
+              >
+                <KebabIcon className="h-4 w-4" />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-[calc(100%+6px)] z-10 flex min-w-[150px] flex-col gap-1 rounded-lg border border-line bg-surface p-[0.35rem] shadow-lift">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setMenuOpen(false);
+                      onRename();
+                    }}
+                    className="rounded-md px-[0.65rem] py-2 text-left text-sm font-semibold hover:bg-surface-sunk"
+                  >
+                    Rename
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setMenuOpen(false);
+                      onDelete();
+                    }}
+                    className="rounded-md px-[0.65rem] py-2 text-left text-sm font-semibold text-danger hover:bg-surface-sunk"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <h3 className="mb-3 font-display text-xl font-semibold text-ink">

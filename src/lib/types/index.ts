@@ -14,6 +14,7 @@ export interface TodoList {
   members: Record<string, Role>;
   createdAt: number;
   updatedAt: number;
+  order?: number;
 }
 
 export interface Task {
@@ -23,4 +24,5 @@ export interface Task {
   completed: boolean;
   createdAt: number;
   updatedAt: number;
+  order?: number;
 }

@@ -4,6 +4,22 @@ import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { updateTasksOrder } from "@/lib/firestore/tasks";
 import { useAuth } from "@/hooks/useAuth";
 import { useListDetail } from "@/hooks/useListDetail";
 import { useTasks } from "@/hooks/useTasks";
@@ -20,6 +36,33 @@ export default function ListDetailPage({ params }: { params: Promise<{ listId: s
   const { list, role, loading: listLoading, error: listError } = useListDetail(listId);
   const { tasks, loading: tasksLoading, error: tasksError } = useTasks(listId);
   const [taskModalTarget, setTaskModalTarget] = useState<Task | "new" | null>(null);
+
+  const [localTasks, setLocalTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = localTasks.findIndex((t) => t.id === active.id);
+      const newIndex = localTasks.findIndex((t) => t.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reordered = arrayMove(localTasks, oldIndex, newIndex);
+        setLocalTasks(reordered);
+        const updates = reordered.map((task, index) => ({ id: task.id, order: index }));
+        updateTasksOrder(listId, updates).catch(() => {
+          toast.error("Failed to save new order");
+        });
+      }
+    }
+  };
 
   const canEdit = role === "owner" || role === "admin";
   const editingTask = taskModalTarget && taskModalTarget !== "new" ? taskModalTarget : undefined;
@@ -76,7 +119,7 @@ export default function ListDetailPage({ params }: { params: Promise<{ listId: s
         <div>
           <h1 className="font-display text-[1.9rem] font-bold leading-tight text-ink sm:text-[2.75rem]">{list.title}</h1>
           <p className="mt-2 text-sm text-ink-soft">
-            {tasks.filter((t) => t.completed).length} of {tasks.length} done · your role: {role}
+            {localTasks.filter((t) => t.completed).length} of {localTasks.length} done · your role: {role}
           </p>
         </div>
         {canEdit && (
@@ -96,20 +139,24 @@ export default function ListDetailPage({ params }: { params: Promise<{ listId: s
             <p className="text-danger">We couldn&apos;t load these tasks. Refresh the page to try again.</p>
           ) : tasksLoading ? (
             <p className="text-ink-soft">Loading tasks…</p>
-          ) : tasks.length === 0 ? (
+          ) : localTasks.length === 0 ? (
             <p className="text-ink-soft">No tasks yet.</p>
           ) : (
-            <ul className="flex flex-col gap-3">
-              {tasks.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  listId={listId}
-                  canEdit={canEdit}
-                  onEdit={() => setTaskModalTarget(task)}
-                />
-              ))}
-            </ul>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={localTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                <ul className="flex flex-col gap-3">
+                  {localTasks.map((task) => (
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      listId={listId}
+                      canEdit={canEdit}
+                      onEdit={() => setTaskModalTarget(task)}
+                    />
+                  ))}
+                </ul>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
 

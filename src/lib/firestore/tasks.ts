@@ -8,6 +8,7 @@ import {
   orderBy,
   query,
   updateDoc,
+  writeBatch,
   type FirestoreError,
   type Unsubscribe,
 } from "firebase/firestore";
@@ -22,6 +23,7 @@ function toTask(id: string, data: DocumentData): Task {
     completed: data.completed,
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
+    order: data.order ?? data.createdAt,
   };
 }
 
@@ -38,7 +40,9 @@ export function subscribeToTasks(
   return onSnapshot(
     q,
     (snapshot) => {
-      callback(snapshot.docs.map((d) => toTask(d.id, d.data())));
+      const items = snapshot.docs.map((d) => toTask(d.id, d.data()));
+      items.sort((a, b) => (a.order ?? a.createdAt) - (b.order ?? b.createdAt));
+      callback(items);
     },
     onError
   );
@@ -52,6 +56,7 @@ export async function createTask(listId: string, title: string, description: str
     completed: false,
     createdAt: now,
     updatedAt: now,
+    order: Date.now(),
   });
 }
 
@@ -69,4 +74,12 @@ export async function deleteTask(listId: string, taskId: string): Promise<void> 
 
 export async function toggleTaskCompleted(listId: string, taskId: string, completed: boolean): Promise<void> {
   await updateDoc(doc(db, "lists", listId, "tasks", taskId), { completed, updatedAt: Date.now() });
+}
+
+export async function updateTasksOrder(listId: string, taskOrders: { id: string; order: number }[]): Promise<void> {
+  const batch = writeBatch(db);
+  taskOrders.forEach(({ id, order }) => {
+    batch.update(doc(db, "lists", listId, "tasks", id), { order, updatedAt: Date.now() });
+  });
+  await batch.commit();
 }
