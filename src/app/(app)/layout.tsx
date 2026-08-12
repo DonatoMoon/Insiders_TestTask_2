@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { logoutUser } from "@/lib/auth/authService";
-import { Button } from "@/components/ui/Button";
+
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, initializing } = useAuth();
@@ -37,7 +37,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 px-10 py-4">
+        <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-10">
           <Link href="/lists" className="font-display text-xl font-bold text-ink hover:text-accent-text">
             Together
           </Link>
@@ -45,9 +45,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <span className="hidden font-body text-sm text-ink-soft sm:inline">
               {user.displayName ?? user.email}
             </span>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="text-sm font-semibold text-ink-faint transition-colors hover:text-ink"
+            >
               Sign out
-            </Button>
+            </button>
           </div>
         </div>
       </header>

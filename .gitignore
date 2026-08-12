@@ -40,3 +40,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI docs & extra markdown files
+AGENTS.md
+CLAUDE.md
+.superpowers/
+docs/
+*.txt
+.cursor/
+.gemini/
+.claude/
+

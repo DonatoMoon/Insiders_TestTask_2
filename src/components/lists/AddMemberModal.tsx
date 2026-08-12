@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { memberSchema, MemberFormValues } from "@/lib/validation/schemas";
@@ -9,6 +9,7 @@ import { addMember } from "@/lib/firestore/lists";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
+import { Select } from "@/components/ui/Select";
 
 const inputClass =
   "w-full rounded-lg border border-line-strong bg-surface-sunk px-[0.9rem] py-3 text-base text-ink placeholder:text-ink-faint focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent";
@@ -24,8 +25,12 @@ export function AddMemberModal({ open, onClose, listId }: AddMemberModalProps) {
     register,
     handleSubmit,
     reset,
+    setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<MemberFormValues>({ resolver: zodResolver(memberSchema), defaultValues: { role: "admin" } });
+
+  const roleValue = useWatch({ name: "role", control }) || "admin";
 
   useEffect(() => {
     if (open) reset({ email: "", role: "admin" });
@@ -59,10 +64,15 @@ export function AddMemberModal({ open, onClose, listId }: AddMemberModalProps) {
           </div>
           <div className="flex-1">
             <Field label="Role" htmlFor="member-role-input">
-              <select id="member-role-input" className={inputClass} {...register("role")}>
-                <option value="admin">Admin</option>
-                <option value="viewer">Viewer</option>
-              </select>
+              <Select
+                value={roleValue}
+                onChange={(val) => setValue("role", val as "admin" | "viewer")}
+                options={[
+                  { value: "admin", label: "Admin" },
+                  { value: "viewer", label: "Viewer" },
+                ]}
+                className={inputClass}
+              />
             </Field>
           </div>
         </div>

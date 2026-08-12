@@ -26,11 +26,3 @@ The CLI is not a project dependency — install it first with `npm i -g firebase
    - `NEXT_PUBLIC_FIREBASE_APP_ID`
 3. Deploy, then add the Vercel domain under Firebase console → Authentication → Settings → Authorized domains, so sign-in works from the deployed origin.
 4. Publish `firestore.rules` to the Firebase project (see above) — Vercel deploys the app only, never the rules.
-
-Live URL: _not deployed yet — add the URL here once the first deploy lands._
-
-## Design & architecture docs
-
-- `docs/superpowers/specs/2026-08-12-todo-app-design.md` — architecture and design decisions
-- `docs/superpowers/specs/2026-08-12-todo-app-discovery-log.md` — requirements discovery Q&A
-- `docs/superpowers/plans/2026-08-12-todo-app-implementation.md` — this build's task-by-task implementation plan

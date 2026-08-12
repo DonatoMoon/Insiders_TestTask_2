@@ -24,12 +24,12 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(42,33,24,0.42)] p-6"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-[rgba(42,33,24,0.42)] p-0 sm:items-center sm:p-6"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-[440px] animate-riseIn rounded-card bg-surface p-7 shadow-pop">
+      <div className="w-full animate-riseIn rounded-t-[20px] bg-surface p-5 pb-8 shadow-pop sm:max-w-[440px] sm:rounded-card sm:p-7 sm:pb-7">
         <div className="mb-[1.1rem] flex items-start justify-between gap-4">
           <h3 className="font-display text-xl font-bold text-ink">{title}</h3>
           <button type="button" onClick={onClose} aria-label="Close" className="text-ink-faint hover:text-ink">

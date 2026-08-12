@@ -9,6 +9,7 @@ html {
 body {
   background: theme("colors.bg");
   color: theme("colors.ink");
+  overflow-x: clip;
 }
 
 /* Honour the OS-level reduced-motion preference. `!important` is warranted

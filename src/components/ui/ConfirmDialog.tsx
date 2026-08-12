@@ -16,11 +16,11 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({ open, onClose, onConfirm, title, body, confirmLabel = "Delete" }: ConfirmDialogProps) {
   return (
     <Modal open={open} onClose={onClose} title={title}>
-      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-danger-soft text-danger">
-        <WarningIcon className="h-[22px] w-[22px]" />
+      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-danger-soft text-danger">
+        <WarningIcon className="h-7 w-7" />
       </div>
-      <p className="text-sm text-ink-soft">{body}</p>
-      <div className="mt-6 flex justify-end gap-[0.6rem]">
+      <p className="text-center text-sm text-ink-soft">{body}</p>
+      <div className="mt-7 flex justify-end gap-[0.6rem]">
         <Button variant="ghost" onClick={onClose}>
           Cancel
         </Button>

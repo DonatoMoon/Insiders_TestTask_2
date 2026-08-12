@@ -8,6 +8,11 @@ import type { Task } from "@/lib/types";
 // Stable empty reference so consumers don't see a new array every render.
 const NO_TASKS: Task[] = [];
 
+// Module-level cache — survives component unmount/remount (page navigations).
+// The real-time subscription below keeps it up-to-date, so re-visiting a list
+// shows stale-while-revalidate data instead of a loading flash.
+const tasksCache = new Map<string, Task[]>();
+
 interface TasksSnapshot {
   listId: string;
   tasks: Task[];
@@ -17,13 +22,20 @@ interface TasksSnapshot {
 export function useTasks(listId: string) {
   // The snapshot carries the listId it belongs to, so switching lists reads as
   // "loading" without a setState call in the effect body.
-  const [snapshot, setSnapshot] = useState<TasksSnapshot | null>(null);
+  // Initialise from cache immediately — no loading flash when revisiting a list.
+  const [snapshot, setSnapshot] = useState<TasksSnapshot | null>(() => {
+    const cached = tasksCache.get(listId);
+    return cached ? { listId, tasks: cached, error: null } : null;
+  });
 
   useEffect(() => {
     return subscribeToTasks(
       listId,
-      (tasks) => setSnapshot({ listId, tasks, error: null }),
-      (error) => setSnapshot({ listId, tasks: [], error })
+      (tasks) => {
+        tasksCache.set(listId, tasks);
+        setSnapshot({ listId, tasks, error: null });
+      },
+      (error) => setSnapshot({ listId, tasks: tasksCache.get(listId) ?? [], error })
     );
   }, [listId]);
 

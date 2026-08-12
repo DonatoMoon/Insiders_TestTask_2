@@ -28,7 +28,7 @@ export function MembersPanel({ listId, members, isOwner, currentUid }: MembersPa
   const [removeTarget, setRemoveTarget] = useState<{ uid: string; label: string } | null>(null);
 
   return (
-    <aside className="sticky top-[100px] rounded-card border border-line bg-surface p-[1.35rem]">
+    <aside className="rounded-card border border-line bg-surface p-[1.35rem] lg:sticky lg:top-[100px]">
       <div className="mb-4 flex items-center justify-between text-xs font-bold uppercase tracking-wide text-ink-soft">
         Members
         {isOwner && (

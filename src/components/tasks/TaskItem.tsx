@@ -64,7 +64,7 @@ export function TaskItem({ task, listId, canEdit, onEdit }: TaskItemProps) {
             type="button"
             aria-label="Edit"
             onClick={onEdit}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-surface-sunk text-ink-soft hover:border-accent hover:text-accent-text"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-surface-sunk text-ink-soft hover:border-accent hover:text-accent-text"
           >
             <PencilIcon className="h-[15px] w-[15px]" />
           </button>
@@ -72,7 +72,7 @@ export function TaskItem({ task, listId, canEdit, onEdit }: TaskItemProps) {
             type="button"
             aria-label="Delete"
             onClick={() => setConfirmOpen(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-surface-sunk text-ink-soft hover:border-danger hover:text-danger"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-surface-sunk text-ink-soft hover:border-danger hover:text-danger"
           >
             <TrashIcon className="h-[15px] w-[15px]" />
           </button>

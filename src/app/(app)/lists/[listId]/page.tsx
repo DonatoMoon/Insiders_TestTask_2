@@ -10,7 +10,6 @@ import { useTasks } from "@/hooks/useTasks";
 import { TaskModal } from "@/components/tasks/TaskModal";
 import { TaskItem } from "@/components/tasks/TaskItem";
 import { MembersPanel } from "@/components/lists/MembersPanel";
-import { Button } from "@/components/ui/Button";
 import { ChevronLeftIcon, PlusIcon } from "@/components/ui/icons";
 import type { Task } from "@/lib/types";
 
@@ -67,28 +66,31 @@ export default function ListDetailPage({ params }: { params: Promise<{ listId: s
   }
 
   return (
-    <main className="mx-auto max-w-[1360px] px-10 py-11">
+    <main className="mx-auto max-w-[1360px] px-4 py-6 sm:px-6 sm:py-9 lg:px-10 lg:py-11">
       <Link href="/lists" className="mb-6 inline-flex items-center gap-[0.4rem] text-sm font-bold text-ink-soft hover:text-accent-text">
         <ChevronLeftIcon className="h-[15px] w-[15px]" />
         Back to lists
       </Link>
 
-      <div className="mb-9 flex flex-wrap items-start justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4 sm:mb-9">
         <div>
-          <h1 className="font-display text-[2.75rem] font-bold leading-tight text-ink">{list.title}</h1>
+          <h1 className="font-display text-[1.9rem] font-bold leading-tight text-ink sm:text-[2.75rem]">{list.title}</h1>
           <p className="mt-2 text-sm text-ink-soft">
             {tasks.filter((t) => t.completed).length} of {tasks.length} done · your role: {role}
           </p>
         </div>
         {canEdit && (
-          <Button onClick={() => setTaskModalTarget("new")}>
+          <button
+            onClick={() => setTaskModalTarget("new")}
+            className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-[0.65rem] text-sm font-bold text-surface transition-transform hover:scale-[1.02] active:scale-100"
+          >
             <PlusIcon className="h-4 w-4" />
             Add task
-          </Button>
+          </button>
         )}
       </div>
 
-      <div className="grid items-start gap-10 lg:grid-cols-[1fr_320px]">
+      <div className="grid items-start gap-6 lg:grid-cols-[1fr_320px] lg:gap-10">
         <div>
           {tasksError ? (
             <p className="text-danger">We couldn&apos;t load these tasks. Refresh the page to try again.</p>
