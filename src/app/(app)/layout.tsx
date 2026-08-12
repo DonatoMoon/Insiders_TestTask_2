@@ -38,7 +38,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <>
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-10">
-          <Link href="/lists" className="font-display text-xl font-bold text-ink hover:text-accent-text">
+          <Link href="/lists" className="group flex items-center gap-2.5 font-display text-xl font-bold text-ink transition-colors hover:text-accent-text">
+            <span className="h-6 w-6 rounded-md bg-accent shrink-0 transition-transform group-hover:scale-105" aria-hidden="true" />
             Together
           </Link>
           <div className="flex items-center gap-4">
