@@ -80,10 +80,14 @@ export function MembersPanel({ listId, members, isOwner, currentUid }: MembersPa
         title="Remove member?"
         body={`${removeTarget?.label} will lose access to this list immediately.`}
         confirmLabel="Remove"
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!removeTarget) return;
-          removeMember(listId, removeTarget.uid);
-          toast.success("Member removed");
+          try {
+            await removeMember(listId, removeTarget.uid);
+            toast.success("Member removed");
+          } catch {
+            toast.error("Something went wrong, try again");
+          }
         }}
       />
     </aside>
