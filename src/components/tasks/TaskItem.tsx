@@ -25,7 +25,13 @@ export function TaskItem({ task, listId, canEdit, onEdit }: TaskItemProps) {
         role="checkbox"
         aria-checked={task.completed}
         aria-label={task.completed ? "Mark as not completed" : "Mark as completed"}
-        onClick={() => toggleTaskCompleted(listId, task.id, !task.completed)}
+        onClick={async () => {
+          try {
+            await toggleTaskCompleted(listId, task.id, !task.completed);
+          } catch {
+            toast.error("Something went wrong, try again");
+          }
+        }}
         className={clsx(
           "mt-0.5 flex h-[25px] w-[25px] flex-none items-center justify-center rounded-[7px] border-[1.8px] transition-colors",
           task.completed ? "border-sage bg-sage-soft" : "border-line-strong bg-surface"
@@ -78,9 +84,13 @@ export function TaskItem({ task, listId, canEdit, onEdit }: TaskItemProps) {
         onClose={() => setConfirmOpen(false)}
         title="Delete task?"
         body={`"${task.title}" will be permanently deleted. This can't be undone.`}
-        onConfirm={() => {
-          deleteTask(listId, task.id);
-          toast.success("Task deleted");
+        onConfirm={async () => {
+          try {
+            await deleteTask(listId, task.id);
+            toast.success("Task deleted");
+          } catch {
+            toast.error("Something went wrong, try again");
+          }
         }}
       />
     </li>
