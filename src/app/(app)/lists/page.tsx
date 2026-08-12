@@ -16,7 +16,7 @@ type SortOption = "updated" | "name";
 
 export default function ListsPage() {
   const { user } = useAuth();
-  const { lists, loading } = useLists();
+  const { lists, loading, error } = useLists();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOption>("updated");
   const [createOpen, setCreateOpen] = useState(false);
@@ -28,6 +28,15 @@ export default function ListsPage() {
     const result = term ? lists.filter((l) => l.title.toLowerCase().includes(term)) : lists;
     return [...result].sort((a, b) => (sort === "name" ? a.title.localeCompare(b.title) : b.updatedAt - a.updatedAt));
   }, [lists, search, sort]);
+
+  // `renameTarget` is state, so its identity is stable across re-renders;
+  // memoising on it keeps the `initial` object stable too. Without this the
+  // fresh object literal re-fired the modal's reset effect on every unrelated
+  // re-render (a realtime list update, say) and wiped the user's typing.
+  const renameInitial = useMemo(
+    () => (renameTarget ? { id: renameTarget.id, title: renameTarget.title } : undefined),
+    [renameTarget]
+  );
 
   // Stat pills use the full unfiltered `lists` so they don't shift while
   // the user is mid-search — only the rendered groups below use `filtered`.
@@ -85,7 +94,9 @@ export default function ListsPage() {
         </Button>
       </div>
 
-      {loading ? (
+      {error ? (
+        <p className="text-danger">We couldn&apos;t load your lists. Refresh the page to try again.</p>
+      ) : loading ? (
         <p className="text-ink-soft">Loading lists…</p>
       ) : (
         <>
@@ -101,7 +112,7 @@ export default function ListsPage() {
         open={Boolean(renameTarget)}
         onClose={() => setRenameTarget(null)}
         ownerId={user.uid}
-        initial={renameTarget ? { id: renameTarget.id, title: renameTarget.title } : undefined}
+        initial={renameInitial}
       />
       <ConfirmDialog
         open={Boolean(deleteTarget)}

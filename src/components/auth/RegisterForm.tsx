@@ -13,6 +13,29 @@ import { Field } from "@/components/ui/Field";
 const inputClass =
   "w-full rounded-lg border border-line-strong bg-surface-sunk px-[0.9rem] py-3 text-base text-ink placeholder:text-ink-faint focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent";
 
+// Firebase Auth error strings ("Firebase: Error (auth/email-already-in-use).")
+// are not user-facing copy, so map the codes we can act on to friendly text.
+// Read `code` structurally rather than via `instanceof FirebaseError`:
+// firebase/auth ships its own copy of that class, so the identity check
+// against firebase/app's export can't be relied on.
+function errorCode(err: unknown): string | null {
+  if (err && typeof err === "object" && "code" in err && typeof err.code === "string") {
+    return err.code;
+  }
+  return null;
+}
+
+function registerErrorMessage(err: unknown): string {
+  switch (errorCode(err)) {
+    case "auth/email-already-in-use":
+      return "An account with this email already exists";
+    case "auth/weak-password":
+      return "Password is too weak";
+    default:
+      return "Could not create account";
+  }
+}
+
 export function RegisterForm() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -29,8 +52,7 @@ export function RegisterForm() {
       toast.success("Account created");
       router.push("/lists");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not create account";
-      toast.error(message);
+      toast.error(registerErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

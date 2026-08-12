@@ -10,3 +10,18 @@ body {
   background: theme("colors.bg");
   color: theme("colors.ink");
 }
+
+/* Honour the OS-level reduced-motion preference. `!important` is warranted
+   here: this is a global accessibility override that has to beat Tailwind's
+   own animation/transition utilities, not a component style fighting for
+   specificity. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

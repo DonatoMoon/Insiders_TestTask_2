@@ -40,6 +40,8 @@ export function AddMemberModal({ open, onClose, listId }: AddMemberModalProps) {
     } catch (err) {
       if (err instanceof Error && err.message === "user-not-found") {
         toast.error("No account found with that email");
+      } else if (err instanceof Error && err.message === "self-invite") {
+        toast.error("You can't invite yourself");
       } else {
         toast.error("Something went wrong, try again");
       }

@@ -20,12 +20,34 @@ service cloud.firestore {
       function isOwner() {
         return isSignedIn() && resource.data.members[request.auth.uid] == 'owner';
       }
+      // Shape/type validation mirroring listSchema in src/lib/validation/schemas.ts.
+      // The client-side zod schemas are trivially bypassed via the SDK, so the
+      // same constraints are restated here.
+      function isValidList(data) {
+        return data.keys().hasOnly(['title', 'ownerId', 'members', 'createdAt', 'updatedAt'])
+          && data.keys().hasAll(['title', 'ownerId', 'members', 'createdAt', 'updatedAt'])
+          && data.title is string && data.title.size() >= 1 && data.title.size() <= 80
+          && data.ownerId is string
+          && data.members is map
+          && data.members.values().hasOnly(['owner', 'admin', 'viewer'])
+          && data.createdAt is number
+          && data.updatedAt is number;
+      }
 
       allow read: if isMember();
       allow create: if isSignedIn()
+        && isValidList(request.resource.data)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.members[request.auth.uid] == 'owner';
-      allow update: if isOwner();
+      // The owner must still be an owner after the write. Without this an owner
+      // can invite their own email as admin/viewer, demote themselves, and lose
+      // every owner-only action with no way back (isOwner() reads the pre-write
+      // doc, so the write would otherwise be allowed).
+      allow update: if isOwner()
+        && isValidList(request.resource.data)
+        && request.resource.data.members[request.auth.uid] == 'owner'
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if isOwner();
 
       match /tasks/{taskId} {
@@ -41,14 +63,30 @@ service cloud.firestore {
         function isParentEditor() {
           return isSignedIn() && (parentRole() == 'owner' || parentRole() == 'admin');
         }
+        // Mirrors taskSchema in src/lib/validation/schemas.ts.
+        function isValidTask(data) {
+          return data.keys().hasOnly(['title', 'description', 'completed', 'createdAt', 'updatedAt'])
+            && data.keys().hasAll(['title', 'description', 'completed', 'createdAt', 'updatedAt'])
+            && data.title is string && data.title.size() >= 1 && data.title.size() <= 120
+            && data.description is string && data.description.size() <= 500
+            && data.completed is bool
+            && data.createdAt is number
+            && data.updatedAt is number;
+        }
 
         allow read: if isParentMember();
-        allow create: if isParentEditor();
+        allow create: if isParentEditor() && isValidTask(request.resource.data);
         allow delete: if isParentEditor();
-        allow update: if isParentEditor() || (
-          isParentMember() && parentRole() == 'viewer' &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completed', 'updatedAt'])
-        );
+        // Shape validation applies to the resulting document, so it composes
+        // with (rather than replaces) the viewer's completed-only exception.
+        allow update: if isValidTask(request.resource.data)
+          && request.resource.data.createdAt == resource.data.createdAt
+          && (
+            isParentEditor() || (
+              isParentMember() && parentRole() == 'viewer' &&
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completed', 'updatedAt'])
+            )
+          );
       }
     }
   }

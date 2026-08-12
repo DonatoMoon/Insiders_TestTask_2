@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { formatRelativeTime } from "@/lib/format";
 import { KeyIcon, WrenchIcon, EyeIcon, KebabIcon } from "@/components/ui/icons";
@@ -11,6 +11,16 @@ const roleMeta: Record<Role, { label: string; icon: typeof KeyIcon; classes: str
   admin: { label: "admin", icon: WrenchIcon, classes: "text-gold-text bg-gold-soft" },
   viewer: { label: "viewer", icon: EyeIcon, classes: "text-sage-text bg-sage-soft" },
 };
+
+// The "pinned note" tilt has to look random but stay put across re-renders, so
+// it's derived from the list id rather than Math.random(). Range: -1.5°…1.5°.
+function tiltFromId(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) {
+    hash = (hash * 31 + id.charCodeAt(i)) % 1000;
+  }
+  return `${((hash / 999) * 3 - 1.5).toFixed(2)}deg`;
+}
 
 interface ListCardProps {
   list: TodoList;
@@ -24,9 +34,13 @@ export function ListCard({ list, role, onRename, onDelete }: ListCardProps) {
   const meta = roleMeta[role];
   const RoleIcon = meta.icon;
   const memberCount = Object.keys(list.members).length;
+  const tilt = useMemo(() => tiltFromId(list.id), [list.id]);
 
   return (
-    <article className="relative rounded-card border border-line bg-surface p-[1.4rem] shadow-rest transition-transform hover:-translate-y-1 hover:shadow-lift">
+    <article
+      style={{ "--tilt": tilt } as CSSProperties}
+      className="relative rotate-[var(--tilt)] rounded-card border border-line bg-surface p-[1.4rem] shadow-rest transition duration-300 hover:-translate-y-1 hover:rotate-0 hover:shadow-lift"
+    >
       <div className="mb-[0.85rem] flex items-start justify-between gap-2">
         <span
           className={`inline-flex -rotate-[4deg] items-center gap-[0.35rem] rounded-full border border-dashed border-current px-[0.6rem] py-[0.32rem] text-[0.72rem] font-bold ${meta.classes}`}

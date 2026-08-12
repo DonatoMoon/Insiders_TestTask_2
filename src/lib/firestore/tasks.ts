@@ -8,6 +8,7 @@ import {
   orderBy,
   query,
   updateDoc,
+  type FirestoreError,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
@@ -28,11 +29,19 @@ function tasksCollection(listId: string) {
   return collection(db, "lists", listId, "tasks");
 }
 
-export function subscribeToTasks(listId: string, callback: (tasks: Task[]) => void): Unsubscribe {
+export function subscribeToTasks(
+  listId: string,
+  callback: (tasks: Task[]) => void,
+  onError: (error: FirestoreError) => void
+): Unsubscribe {
   const q = query(tasksCollection(listId), orderBy("createdAt", "asc"));
-  return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map((d) => toTask(d.id, d.data())));
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      callback(snapshot.docs.map((d) => toTask(d.id, d.data())));
+    },
+    onError
+  );
 }
 
 export async function createTask(listId: string, title: string, description: string): Promise<void> {

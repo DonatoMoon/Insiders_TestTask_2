@@ -27,7 +27,7 @@ export function LoginForm() {
     try {
       await loginUser(values.email, values.password);
       router.push("/lists");
-    } catch (err) {
+    } catch {
       toast.error("Incorrect email or password");
     } finally {
       setSubmitting(false);

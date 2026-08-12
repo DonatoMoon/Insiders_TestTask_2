@@ -1,7 +1,9 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useListDetail } from "@/hooks/useListDetail";
 import { useTasks } from "@/hooks/useTasks";
@@ -14,12 +16,36 @@ import type { Task } from "@/lib/types";
 
 export default function ListDetailPage({ params }: { params: Promise<{ listId: string }> }) {
   const { listId } = use(params);
+  const router = useRouter();
   const { user } = useAuth();
-  const { list, role, loading: listLoading } = useListDetail(listId);
-  const { tasks, loading: tasksLoading } = useTasks(listId);
+  const { list, role, loading: listLoading, error: listError } = useListDetail(listId);
+  const { tasks, loading: tasksLoading, error: tasksError } = useTasks(listId);
   const [taskModalTarget, setTaskModalTarget] = useState<Task | "new" | null>(null);
 
   const canEdit = role === "owner" || role === "admin";
+  const editingTask = taskModalTarget && taskModalTarget !== "new" ? taskModalTarget : undefined;
+
+  // `editingTask` is the `taskModalTarget` state value itself, so its identity
+  // is stable across re-renders; memoising on it keeps the `initial` object
+  // stable too. Without this the fresh object literal re-fired the modal's
+  // reset effect on every unrelated re-render (a sibling task toggling, say)
+  // and discarded whatever the user had typed.
+  const taskInitial = useMemo(
+    () =>
+      editingTask
+        ? { id: editingTask.id, title: editingTask.title, description: editingTask.description }
+        : undefined,
+    [editingTask]
+  );
+
+  // A live subscription can start failing while the page is open — e.g. the
+  // owner removes this member. Send them back rather than showing stale data.
+  const accessRevoked = listError?.code === "permission-denied" || tasksError?.code === "permission-denied";
+  useEffect(() => {
+    if (!accessRevoked) return;
+    toast.error("You no longer have access to this list");
+    router.replace("/lists");
+  }, [accessRevoked, router]);
 
   if (listLoading || !user) {
     return (
@@ -39,8 +65,6 @@ export default function ListDetailPage({ params }: { params: Promise<{ listId: s
       </main>
     );
   }
-
-  const editingTask = taskModalTarget && taskModalTarget !== "new" ? taskModalTarget : undefined;
 
   return (
     <main className="mx-auto max-w-[1360px] px-10 py-11">
@@ -66,7 +90,9 @@ export default function ListDetailPage({ params }: { params: Promise<{ listId: s
 
       <div className="grid items-start gap-10 lg:grid-cols-[1fr_320px]">
         <div>
-          {tasksLoading ? (
+          {tasksError ? (
+            <p className="text-danger">We couldn&apos;t load these tasks. Refresh the page to try again.</p>
+          ) : tasksLoading ? (
             <p className="text-ink-soft">Loading tasks…</p>
           ) : tasks.length === 0 ? (
             <p className="text-ink-soft">No tasks yet.</p>
@@ -93,7 +119,7 @@ export default function ListDetailPage({ params }: { params: Promise<{ listId: s
           open={taskModalTarget !== null}
           onClose={() => setTaskModalTarget(null)}
           listId={listId}
-          initial={editingTask ? { id: editingTask.id, title: editingTask.title, description: editingTask.description } : undefined}
+          initial={taskInitial}
         />
       )}
     </main>
