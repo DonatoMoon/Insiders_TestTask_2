@@ -30,8 +30,8 @@ export function CreateListModal({ open, onClose, ownerId, initial }: CreateListM
   } = useForm<ListFormValues>({ resolver: zodResolver(listSchema), defaultValues: { title: initial?.title ?? "" } });
 
   useEffect(() => {
-    reset({ title: initial?.title ?? "" });
-  }, [initial, reset]);
+    if (open) reset({ title: initial?.title ?? "" });
+  }, [open, initial, reset]);
 
   async function onSubmit(values: ListFormValues) {
     try {
